@@ -1,0 +1,133 @@
+create or replace TYPE OBJ_FOOD FORCE AS OBJECT(
+    NAME VARCHAR2(100),
+    CATEGORY VARCHAR2(150),
+    GROWN_IN VARCHAR2(150)
+)
+NOT FINAL;
+
+create or replace TYPE OBJ_DESSERT UNDER OBJ_FOOD(
+    CONTAINS_CHOCOLATE CHAR(1),
+    YEAR_CREATED NUMBER(4)
+)
+NOT FINAL;
+
+create or replace TYPE OBJ_CAKE UNDER OBJ_DESSERT(
+    DIAMETER NUMBER,
+    INSCRIPTION VARCHAR2(200)
+);
+
+CREATE TABLE meals
+(
+   served_on     DATE,
+   appetizer     OBJ_FOOD,
+   main_course   OBJ_FOOD,
+   dessert       OBJ_DESSERT
+);
+
+INSERT INTO meals
+        VALUES (SYSDATE + 1,
+           OBJ_FOOD ('Shrimp cocktail', 'PROTEIN', 'Ocean'),
+           OBJ_FOOD ('Stir fry tofu', 'PROTEIN', 'Vat'),
+           OBJ_CAKE ('Apple Pie',
+                    'FRUIT', 'Baker''s Square',
+                    'N', 2001, 8, NULL));
+
+INSERT INTO meals
+        VALUES (SYSDATE + 1,
+                OBJ_FOOD ('Fried Calamari', 'PROTEIN', 'Ocean'),
+                OBJ_DESSERT ('Butter cookie',
+                   'CARBOHYDRATE', 'Oven', 'N', 2001),
+                OBJ_CAKE ('French Silk Pie',
+                   'CARBOHYDRATE', 'Baker''s Square',
+                   Y', 2001, 6, 'To My Favorite Frenchman'));
+
+INSERT INTO meals
+        VALUES (SYSDATE + 1,
+                OBJ_FOOD ('Fried Calamari', 'PROTEIN', 'Ocean'),
+                OBJ_CAKE ('French Silk Pie',
+                        'CARBOHYDRATE', 'Baker''s Square',
+                        'Y', 2001, 6, 'To My Favorite Frenchman'),
+                OBJ_DESSERT ('Butter cookie',
+                           'CARBOHYDRATE', 'Oven', 'N', 2001));
+
+DELETE FROM MEALS
+WHERE SERVED_ON=(SELECT SERVED_ON
+    FROM meals
+    ORDER BY SERVED_ON DESC
+    FETCH FIRST 1 ROW ONLY
+    );
+
+
+SELECT *
+  FROM meals
+ WHERE TREAT (DESSERT AS OBJ_CAKE).INSCRIPTION IS NOT NULL;
+ 
+SELECT TREAT(MAIN_COURSE AS OBJ_DESSERT).CONTAINS_CHOCOLATE
+  FROM meals
+ WHERE TREAT (DESSERT AS OBJ_CAKE).INSCRIPTION IS NULL;
+
+CREATE OR REPLACE TYPE OBJ_COMBINE FORCE AS OBJECT(
+   served_on     DATE,
+   appetizer     OBJ_FOOD,
+   main_course   OBJ_FOOD,
+   dessert       OBJ_DESSERT
+);
+
+CREATE OR REPLACE TYPE TYP_COMBINE FORCE AS TABLE OF OBJ_COMBINE;
+
+-- USING FOR I IN (SELECT...), USING FOR LOOP IN A CURSOR
+DECLARE
+    V_DESSERT OBJ_DESSERT;
+BEGIN
+    FOR I IN (
+        SELECT *
+          FROM meals
+         WHERE TREAT (MAIN_COURSE AS OBJ_DESSERT) IS NOT NULL
+    ) LOOP
+        V_DESSERT:=TREAT(I.MAIN_COURSE AS OBJ_DESSERT);
+        
+        DBMS_OUTPUT.PUT_LINE(
+            I.MAIN_COURSE.NAME||'-'||V_DESSERT.CONTAINS_CHOCOLATE
+        );
+    END LOOP;
+END;
+
+create or replace PROCEDURE USP_DUMP_MEAL_TEST AS
+    V_COMBINE       TYP_COMBINE;
+    V_TO_RETURN     TYP_COMBINE;
+    V_DESSERT       OBJ_DESSERT;
+    V_OBJ_DESSERT   OBJ_DESSERT;
+BEGIN
+    SELECT OBJ_COMBINE(
+       served_on,
+       appetizer,
+       main_course,
+       dessert
+    ) BULK COLLECT INTO V_COMBINE FROM(
+        SELECT 
+            served_on,
+            appetizer,
+            main_course,
+            dessert
+        FROM meals
+        WHERE TREAT (MAIN_COURSE AS OBJ_DESSERT) IS NOT NULL
+    );
+
+    FORALL I IN 1..V_COMBINE.COUNT
+        INSERT INTO MEAL_2 VALUES(
+            TREAT(V_COMBINE(I) AS OBJ_COMBINE).served_on,
+            TREAT(V_COMBINE(I) AS OBJ_COMBINE).APPETIZER,
+            TREAT(V_COMBINE(I) AS OBJ_COMBINE).MAIN_COURSE,
+            TREAT(V_COMBINE(I) AS OBJ_COMBINE).DESSERT
+        )
+        RETURNING OBJ_COMBINE(served_on,APPETIZER,MAIN_COURSE,DESSERT) BULK COLLECT INTO V_TO_RETURN;
+
+    -- FOR LOOP FOR OBJECT TYPE
+    FOR I IN 1..V_TO_RETURN.COUNT LOOP
+        V_OBJ_DESSERT:= TREAT(V_TO_RETURN(I).MAIN_COURSE AS OBJ_DESSERT);
+        
+        DBMS_OUTPUT.PUT_LINE(
+            V_TO_RETURN(I).MAIN_COURSE.NAME||'-'||V_OBJ_DESSERT.CONTAINS_CHOCOLATE
+        );
+    END LOOP;
+END;
