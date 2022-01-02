@@ -1,0 +1,120 @@
+package tst;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class GetBiggest {
+	private List<CommunityUpline> uplineLists = new ArrayList<>();
+	
+	public static void main(String[] args) {
+		GetBiggest getBiggest = new GetBiggest();
+		getBiggest.dummyObject();
+		String output=getBiggest.getHighestCount();
+		System.out.println("Hasil count terbesar: "+output);
+	}
+	
+	private void dummyObject() {
+		CommunityUpline up1=new CommunityUpline();
+		up1.setCount(10);
+		up1.setDistance(3);
+		up1.setTodoro("todoro1");
+		up1.setName("upline1");
+		
+//		CommunityUpline up2=new CommunityUpline();
+//		up2.setCount(20);
+//		up2.setDistance(3);
+//		up2.setTodoro("todoro2");
+//		up2.setName("upline2");
+//		
+//		CommunityUpline up3=new CommunityUpline();
+//		up3.setCount(1);
+//		up3.setDistance(3);
+//		up3.setTodoro("todoro3");
+//		up3.setName("upline3");
+//		
+//		CommunityUpline up4=new CommunityUpline();
+//		up4.setCount(5);
+//		up4.setDistance(30);
+//		up4.setTodoro("todoro4");
+//		up4.setName("upline1");
+		
+//		CommunityUpline up4=new CommunityUpline();
+//		up4.setCount(30);
+//		up4.setDistance(30);
+//		up4.setTodoro("todoro4");
+//		up4.setName("upline1");
+		
+//		CommunityUpline up5=new CommunityUpline();
+//		up5.setCount(6);
+//		up5.setDistance(3);
+//		up5.setTodoro("todoro5");
+//		up5.setName("upline1");
+		
+		
+//		CommunityUpline up5=new CommunityUpline();
+//		up5.setCount(20);
+//		up5.setDistance(3);
+//		up5.setTodoro("todoro5");
+//		up5.setName("upline1");
+//		
+//		CommunityUpline up6=new CommunityUpline();
+//		up6.setCount(30);
+//		up6.setDistance(0);
+//		up6.setTodoro("todoro6");
+//		up6.setName("upline1");
+//		
+//		CommunityUpline up7=new CommunityUpline();
+//		up7.setCount(15);
+//		up7.setDistance(3);
+//		up7.setTodoro("todoro7");
+//		up7.setName("upline1");
+//		
+//		CommunityUpline up8=new CommunityUpline();
+//		up8.setCount(50);
+//		up8.setDistance(1);
+//		up8.setTodoro("todoro8");
+//		up8.setName("upline1");
+//		
+//		CommunityUpline up9=new CommunityUpline();
+//		up9.setCount(15);
+//		up9.setDistance(3);
+//		up9.setTodoro("todoro9");
+//		up9.setName("upline1");
+//		
+//		CommunityUpline up10=new CommunityUpline();
+//		up10.setCount(50);
+//		up10.setDistance(5);
+//		up10.setTodoro("todoro10");
+//		up10.setName("upline1");
+//		
+		uplineLists.add(up1);
+//		uplineLists.add(up2);
+//		uplineLists.add(up3);
+//		uplineLists.add(up4);uplineLists.add(up5);
+//		uplineLists.add(up6);
+//		uplineLists.add(up7);
+//		uplineLists.add(up8);
+//		uplineLists.add(up9);
+//		uplineLists.add(up10);
+	}
+	
+	private String getHighestCount() {
+		String todoro="";
+		if(uplineLists.size()>0) {
+			CommunityUpline idxUpline=uplineLists.get(0);
+			for(int i=1;i<uplineLists.size();i++) {
+				//to get the max todoro
+				if(uplineLists.get(i).getCount()>idxUpline.getCount()) {
+					idxUpline=uplineLists.get(i);
+				}else if(uplineLists.get(i).getCount()==idxUpline.getCount()) {
+					//to get the nearest todoro distance
+					if(uplineLists.get(i).getDistance()<idxUpline.getDistance()) {
+						idxUpline=uplineLists.get(i);
+					}
+				}
+			}
+			todoro=idxUpline.getTodoro();
+		}
+		return todoro;
+	}
+}
